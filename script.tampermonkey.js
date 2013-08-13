@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name       Wikia classifier
 // @namespace  http://wikia.com/
-// @version    0.4
+// @version    0.4.1
 // @description  enter something useful
-// @match      http://*.wikia.com/*
-// @match      http://www.wowwiki.com/*
-// @match      http://*.wikipedia.org/*
-// @match      http://*.memory-alpha.org/*
-// @copyright  2012+, You
-// @require       https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.js
+// @match        http://*.wikia.com/*
+// @match        http://www.wowwiki.com/*
+// @match        http://*.wikipedia.org/*
+// @match        http://*.memory-alpha.org/*
+// @updateUrl    https://raw.github.com/ArturD/WikiaClassifierGreasemonkey/master/script.tampermonkey.js
+// @downloadUrl  https://raw.github.com/ArturD/WikiaClassifierGreasemonkey/master/script.tampermonkey.js
+// @copyright    2012+, You
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.js
 // ==/UserScript==
 var jq = jQuery.noConflict();
 
