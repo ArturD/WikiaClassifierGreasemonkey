@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name       Wikia classifier
 // @namespace  http://wikia.com/
-// @version    0.4.1
-// @description  enter something useful
+// @version    0.4.2
+// @description  Tools for classifier
 // @match        http://*.wikia.com/*
 // @match        http://www.wowwiki.com/*
 // @match        http://*.wikipedia.org/*
 // @match        http://*.memory-alpha.org/*
 // @updateUrl    https://raw.github.com/ArturD/WikiaClassifierGreasemonkey/master/script.tampermonkey.js
 // @downloadUrl  https://raw.github.com/ArturD/WikiaClassifierGreasemonkey/master/script.tampermonkey.js
-// @copyright    2012+, You
+// @copyright    2012+, Wikia Inc
 // @require      https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.js
 // ==/UserScript==
 var jq = jQuery.noConflict();
@@ -67,22 +67,34 @@ var jq = jQuery.noConflict();
         return div;
     }
     
-    function getCurrentClassificationFromCouch( callback ) {
+    function getCurrentClassificationFromCouch( callback, errorCallback ) {
         var info = getPageInfo();
         $.ajax({
             type: "GET",
             url: storageUrl + encodeURIComponent( info.url ),
             success: function(x) {
             	callback(x);
-        	},
+            }, error: function(x) {
+              errorCallback(x);
+            },
             dataType: "json"
         });
     }
-    
+
+    function getCurrentRevisionFromCouch( callback ) {
+      getCurrentClassificationFromCouch( function( data ) {
+        callback( data._rev );
+      }, function() {
+        callback();
+      });
+    }
+
     function updateCurrentClass() {
         $('.type-placeholder').text('loading ...');
         getCurrentClassificationFromCouch( function(data) {
-        	$('.type-placeholder').text(data.type);    
+        	$('.type-placeholder').text(data.type);
+        }, function() {
+                $('.type-placeholder').text( " ?? " );
         } );
     }
     
@@ -96,17 +108,23 @@ var jq = jQuery.noConflict();
                 var type = $(this).data('type');
                 var info = getPageInfo();
                 GM_log( "click: " + type );
-            	getCurrentClassificationFromCouch( function( currentVersion ) {
+            	getCurrentRevisionFromCouch( function( currentVersion ) {
                     info.type = type;
-                    info._rev = currentVersion._rev;
-                	GM_log( "rev: " + info._rev);
+                    if( currentVersion ) {
+                      info._rev = currentVersion;
+                      GM_log( "rev: " + info._rev);
+                    }
                     $.ajax({
                         type: "PUT",
                         url: storageUrl + encodeURIComponent( info.url ),
                         data: JSON.stringify(info),
                         success: function(x) {
+                            GM_log("put success");
                             GM_log(x);
                             updateCurrentClass();
+                        }, error: function(x) {
+                            GM_log("put success");
+                            GM_log(x);
                         },
                         dataType: "json"
                     });       
