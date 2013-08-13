@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       Wikia classifier
 // @namespace  http://wikia.com/
-// @version    0.4.5
+// @version    0.4.6
 // @description  Tools for classifier
 // @match        http://*.wikia.com/*
 // @match        http://www.wowwiki.com/*
@@ -14,113 +14,24 @@
 // ==/UserScript==
 var jq = jQuery.noConflict();
 
-// allows using all Jquery AJAX methods in Greasemonkey
-// inspired from http://ryangreenberg.com/archives/2010/03/greasemonkey_jquery.php
-// works with JQuery 1.5
-// (c) 2011 Martin Monperrus
-// (c) 2010 Ryan Greenberg
-//
-// Usage:
-//   $.ajax({
-//     url: '/p/',
-//     xhr: function(){return new GM_XHR();},
-//     type: 'POST',
-//     success: function(val){
-//        ....
-//     }
-//   });
-
-function GM_XHR() {
-    this.type = null;
-    this.url = null;
-    this.async = null;
-    this.username = null;
-    this.password = null;
-    this.status = null;
-    this.headers = {};
-    this.readyState = null;
-
-    this.abort = function () {
-        this.readyState = 0;
-    };
-
-    this.getAllResponseHeaders = function (name) {
-        if (this.readyState != 4) return "";
-        return this.responseHeaders;
-    };
-
-    this.getResponseHeader = function (name) {
-        var regexp = new RegExp('^' + name + ': (.*)$', 'im');
-        var match = regexp.exec(this.responseHeaders);
-        if (match) {
-            return match[1];
-        }
-        return '';
-    };
-
-    this.open = function (type, url, async, username, password) {
-        this.type = type ? type : null;
-        this.url = url ? url : null;
-        this.async = async ? async : null;
-        this.username = username ? username : null;
-        this.password = password ? password : null;
-        this.readyState = 1;
-    };
-
-    this.setRequestHeader = function (name, value) {
-        this.headers[name] = value;
-    };
-
-    this.send = function (data) {
-        this.data = data;
-        var that = this;
-        // http://wiki.greasespot.net/GM_xmlhttpRequest
-        GM_xmlhttpRequest({
-            method: this.type,
-            url: this.url,
-            headers: this.headers,
-            data: this.data,
-            onreadystatechange: function (rsp) {
-                // Populate wrapper object with returned data
-                // including the Greasemonkey specific "responseHeaders"
-                for (var k in rsp) {
-                    if (k == "onreadystatechange" || k == "onload") {
-                        continue;
-                    }
-                    that[k] = rsp[k];
-                }
-                // now we call onreadystatechange
-                that.onreadystatechange();
-            },
-            onload: function () {
-                that.onload();
-            },
-            onerror: function (rsp) {
-                for (var k in rsp) {
-                    that[k] = rsp[k];
-                }
-            }
-        });
-    };
-};
-
-(function (window, unsafeWindow, $) {
-
-    // avoid iframes
-    if (unsafeWindow.top != unsafeWindow.self) return;
-
-
-})(window, unsafeWindow, jq);
+function rootWindow() {
+    try {
+        // avoid iframes
+        if (unsafeWindow.top != unsafeWindow.self) return false;
+    } catch (e){
+        return false;
+    }
+    return true
+}
 
 (function (jQuery) {
     var styles = ".classificator ul { padding-left: 10px }\n" +
         ".classificator .label { padding: 0 3px; font-weight: bold; }";
     var hosts = ["http://db-sds-s2:8081/graph-0.3.1", "http://db-sds-s1:8081/graph-0.3.1", "http://localhost:8080", "http://localhost:9998"];
     var $ = jQuery;
-    var types = ["other", "tv_episode", "tv_series", "tv_season", "ability", "unit", "person", "organization", "level", "achievement", "location", "item", "weapon", "book", "movie", "game", "character", "music_band", "music_recording", "music_album", "vehicle"];
+    var types = ["other", "tv_episode", "tv_series", "tv_season", "ability", "unit", "person", "organization", "level", "achievement", "location", "item", "weapon", "book", "movie", "game", "character", "music_band", "music_recording", "music_album", "vehicle", "disambiguation"];
     var storageUrl = "http://megimikos.pl:5984/facts/";
-    if (unsafeWindow.top != unsafeWindow.self) return;
-
+    if ( !rootWindow() ) return;
 
     function getDomainFromUrl(url) {
         if (url.indexOf('http://') == 0) {
